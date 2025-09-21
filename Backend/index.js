@@ -17,7 +17,7 @@ mongoose
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json()); //so that we can parse json data 
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
@@ -25,3 +25,14 @@ app.listen(3000, () => {
 
 app.use('/backend/user',userRoutes);
 app.use('/backend/auth',authRoutes);
+
+app.use((err, req, res, next) => { //this is a middleware function that will be called whenever an error is thrown in any of the routes
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  return res.status(statusCode).json({ 
+    success: false,
+    statusCode,
+    message,
+   });
+
+});
