@@ -11,7 +11,7 @@ export const signup = async (req, res,next) => { //we use async because we are u
         await newUser.save() //we use await because save() is an asynchronous operation that returns a promise (it might take some time to complete)
         res.status(201).json("User created successfully" );
     } catch (error) {
-        next(error); //pass the error to the error handling middleware in index.js
+        next(error); //we use next to pass the error to the next middleware function (which is the error handling middleware in index.js or in error.js)
     }
 
 };
