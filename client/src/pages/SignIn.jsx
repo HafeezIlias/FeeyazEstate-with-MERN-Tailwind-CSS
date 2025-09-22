@@ -1,13 +1,13 @@
-import { set } from 'mongoose';
 import React,{ useState } from 'react'
 import { Link ,useNavigate} from 'react-router-dom'
-
+import { useDispatch,useSelector } from 'react-redux';
+import { signinStart,signinFailure,signinSuccess } from '../redux/user/userSlice.js';
 
 export default function SignIn() {
-  const [error,setError] = useState(null);
-  const [loading,setLoading] = useState(false);
+  const {loading,error} = useSelector((state) => state.user); //get loading and error from user slice
   const [formData,setFromData]= useState({}) //track the data of form changes
   const navigate = useNavigate(); // initialize useNavigate
+    const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFromData({
@@ -17,9 +17,9 @@ export default function SignIn() {
   };
 
   const handleSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault(); // in react we want to prevent it to refresh the page
     try {
+      dispatch(signinStart());
       const res = await fetch("backend/auth/signin", 
     {
       method: "POST",
@@ -31,18 +31,15 @@ export default function SignIn() {
 
     const data = await res.json();
     if(data.success === false){
-      setError(data.message);
-      setLoading(false);
+      dispatch(signinFailure(data.message));
       return;
     }
     //if signup is successful
-    setLoading(false);
-    setError(null);
+    dispatch(signinSuccess(data));
     navigate("/home"); // Navigate to the sign-in page after successful sign-up
     console.log(data);
     } catch (error) {
-      setLoading(false);
-      setError(error.message);
+      dispatch(signinFailure(error.message));
     }
     
   };
