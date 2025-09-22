@@ -1,17 +1,38 @@
-import User from '../models/user.model.js';
-import bcrypt from 'bcryptjs';
-import { errorHandler } from '../utils/error.js';
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import { errorHandler } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
-export const signup = async (req, res,next) => { //we use async because we are using await inside the function
+export const signup = async (req, res, next) => {
+  //we use async because we are using await inside the function
 
-    const { username, email, password } = req.body;
-    const HashedPassword =  bcrypt.hashSync(password, 10); //hashsync is ansychronous so no need to use await
-    const newUser = new User({ username, email, password: HashedPassword });
-    try {
-        await newUser.save() //we use await because save() is an asynchronous operation that returns a promise (it might take some time to complete)
-        res.status(201).json("User created successfully" );
-    } catch (error) {
-        next(error); //we use next to pass the error to the next middleware function (which is the error handling middleware in index.js or in error.js)
-    }
+  const { username, email, password } = req.body;
+  const HashedPassword = bcrypt.hashSync(password, 10); //hashsync is ansychronous so no need to use await
+  const newUser = new User({ username, email, password: HashedPassword });
+  try {
+    await newUser.save(); //we use await because save() is an asynchronous operation that returns a promise (it might take some time to complete)
+    res.status(201).json("User created successfully");
+  } catch (error) {
+    next(error); //we use next to pass the error to the next middleware function (which is the error handling middleware in index.js or in error.js)
+  }
+};
 
+export const signin = async (req, res, next) => {
+  //we use async because we are using await inside the function
+  const { email, password } = req.body;
+  try {
+    //findone is use for mongodb to find one document that matches the condition
+    const validUser = await User.findOne({ email }); //we use await because findOne() is an asynchronous operation that returns a promise (it might take some time to complete)
+    if (!validUser) return next(errorHandler(404, "User not found"));
+    const validPassword = bcrypt.compareSync(password, validUser.password); //compareSync is synchronous so we can use await
+    if (!validPassword) return next(errorHandler(401, "Wrong credentials!"));
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET_KEY); //{ expiresIn: '1d' });//expires in 1 day
+    const { password:pass, ...others } = validUser._doc; //we do this to exclude the password from the user object that we send to the client side (frontend)
+    res
+      .cookie("access_token", token, { httpOnly: true })
+      .status(200) //httpOnly means the cookie cannot be accessed by the client side (javascript)
+      .json(others); //we can send the user data to the client side (frontend) after successful login
+  } catch (error) {
+    next(error);
+  }
 };
