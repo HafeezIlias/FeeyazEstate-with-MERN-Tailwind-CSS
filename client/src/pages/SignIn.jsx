@@ -2,6 +2,7 @@ import React,{ useState } from 'react'
 import { Link ,useNavigate} from 'react-router-dom'
 import { useDispatch,useSelector } from 'react-redux';
 import { signinStart,signinFailure,signinSuccess } from '../redux/user/userSlice.js';
+import OAuth from '../components/OAuth.jsx';
 
 export default function SignIn() {
   const {loading,error} = useSelector((state) => state.user); //get loading and error from user slice
@@ -55,6 +56,7 @@ export default function SignIn() {
         <input className='border p-3 rounded-lg ' 
         type="password" placeholder='Password' id='password' onChange={handleChange}/>
         <button  disabled={loading} className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80 cursor-pointer'>{loading ? "Loading..." : "Sign In"}</button>
+      <OAuth></OAuth>
       </form>
       <div className='flex gap-2 mt-5'>
         <p> Dont have an account?</p>

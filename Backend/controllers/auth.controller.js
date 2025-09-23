@@ -27,11 +27,48 @@ export const signin = async (req, res, next) => {
     const validPassword = bcrypt.compareSync(password, validUser.password); //compareSync is synchronous so we can use await
     if (!validPassword) return next(errorHandler(401, "Wrong credentials!"));
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET_KEY); //{ expiresIn: '1d' });//expires in 1 day
-    const { password:pass, ...others } = validUser._doc; //we do this to exclude the password from the user object that we send to the client side (frontend)
+    const { password: pass, ...others } = validUser._doc; //we do this to exclude the password from the user object that we send to the client side (frontend)
     res
       .cookie("access_token", token, { httpOnly: true })
       .status(200) //httpOnly means the cookie cannot be accessed by the client side (javascript)
       .json(others); //we can send the user data to the client side (frontend) after successful login
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const googleSignin = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (user) {
+      //if user already exists
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY); //{ expiresIn: '1d' });//expires in 1 day
+      const { password, ...others } = user._doc; //we do this to exclude the password from the user object that we send to the client side (frontend)
+      res
+        .cookie("access_token", token, { httpOnly: true })
+        .status(200) //httpOnly means the cookie cannot be accessed by the client side (javascript)
+        .json(others); //we can send the user data to the client side (frontend) after successful login
+    } else {
+      const generatedPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8); //generate a random password for the user
+      const hashedPassword = bcrypt.hashSync(generatedPassword, 10); //hashsync is ansychronous so no need to use await
+      const newUser = new User({
+        username:
+          req.body.username.split(" ").join("").toLowerCase() +
+          Math.random().toString(36).slice(-3), //remove spaces and convert to lowercase
+        email: req.body.email,
+        password: hashedPassword,
+        avatar: req.body.photo,
+      });
+      await newUser.save();
+      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET_KEY); //{ expiresIn: '1d' });//expires in 1 day
+      const { password, ...others } = newUser._doc; //we do this to exclude the password from the user object that we send to the client side (frontend)
+      res
+        .cookie("access_token", token, { httpOnly: true })
+        .status(200) //httpOnly means the cookie cannot be accessed by the client side (javascript)
+        .json(others); //we can send the user data to the client side (frontend) after successful login
+    }
   } catch (error) {
     next(error);
   }
