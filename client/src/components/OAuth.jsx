@@ -30,7 +30,7 @@ export default function OAuth() {
             });
             const data = await res.json();
             dispatch(signinSuccess(data));
-            navigate("/home"); //use UseNavigate when inside the function use Navigate inside component
+            navigate("/"); //use UseNavigate when inside the function use Navigate inside component
         } catch (error) {
           console.log("Google sign-in failed", error);
         }

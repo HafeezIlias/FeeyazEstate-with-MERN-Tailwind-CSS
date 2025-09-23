@@ -37,7 +37,7 @@ export default function SignIn() {
     }
     //if signup is successful
     dispatch(signinSuccess(data));
-    navigate("/home"); // Navigate to the sign-in page after successful sign-up
+    navigate("/"); // Navigate to the sign-in page after successful sign-up
     console.log(data);
     } catch (error) {
       dispatch(signinFailure(error.message));
