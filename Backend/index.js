@@ -1,8 +1,9 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose from "mongoose"; //npm install mongoose
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.route.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -17,7 +18,8 @@ mongoose
 
 const app = express();
 
-app.use(express.json()); //so that we can parse json data 
+app.use(express.json()); //so that we can parse json data
+app.use(cookieParser()); //to parse cookies from the request 
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
