@@ -3,6 +3,7 @@ import mongoose from "mongoose"; //npm install mongoose
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.route.js";
+import listingRoutes from "./routes/listing.route.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.listen(3000, () => {
 
 app.use('/backend/user',userRoutes);
 app.use('/backend/auth',authRoutes);
+app.use('/backend/listing',listingRoutes);
 
 app.use((err, req, res, next) => { //this is a middleware function that will be called whenever an error is thrown in any of the routes
   const statusCode = err.statusCode || 500;
