@@ -19,6 +19,7 @@ import {
   deleteUserFailure,
 } from "../redux/user/userSlice.js";
 import { set } from "mongoose";
+import { Link } from "react-router-dom";
 export default function Profile() {
   const dispatch = useDispatch();
   const fileRef = useRef(null);
@@ -192,6 +193,7 @@ export default function Profile() {
         >
           {loading ? "Loading ..." : "Update"}
         </button>
+        <Link className="bg-green-600 text-white p-3 rounded-xl uppercase hover:opacity-95 disabled:opacity-80 text-center" to="/create-listing">Create Listing</Link>
       </form>
       <div className="flex justify-between mt-5">
         <span
