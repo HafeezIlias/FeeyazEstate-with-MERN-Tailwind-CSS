@@ -46,9 +46,21 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       },
+      signOutUserStart:(state) => {
+        state.loading = true;
+      },
+      signOutUserSuccess:(state) => {
+        state.loading = false;
+        state.currentUser = null; //when user is deleted, set currentUser to null
+        state.error = null;
+      },
+      signOutUserFailure:(state,action) => {
+        state.loading = false;
+        state.error = action.payload;
+      },
     },
   });
   
-  export const {signinStart,signinSuccess,signinFailure,updateUserStart,updateUserSuccess,updateUserFailure} = userSlice.actions;
+  export const {signinStart,signinSuccess,signinFailure,updateUserStart,updateUserSuccess,updateUserFailure,deleteUserStart,deleteUserSuccess,deleteUserFailure,signOutUserStart,signOutUserSuccess,signOutUserFailure} = userSlice.actions;
   export default userSlice.reducer; //when default we can change the name while importing
   

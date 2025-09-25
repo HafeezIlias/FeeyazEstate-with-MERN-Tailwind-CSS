@@ -3,6 +3,18 @@ import bcrypt from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
 import jwt from "jsonwebtoken";
 
+export const signout = (req, res,next) => {
+  try {
+    res.clearCookie("access_token"); //clear the cookie on the client side
+    res.status(200).json("User signed out successfully.");
+  } catch (error) {
+    next(error);
+
+  }
+};
+
+
+
 export const signup = async (req, res, next) => {
   //we use async because we are using await inside the function
 
