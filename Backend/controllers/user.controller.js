@@ -1,6 +1,7 @@
 import { errorHandler } from "../utils/error.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import Listing from "../models/listing.model.js";
 
 export const test = (req, res) => {
   //   res.send("Hello World!");
@@ -44,4 +45,20 @@ export const deleteUser = async (req, res,next) => {
   }catch (error) {
     next(error); //this will go to the error handling middleware in index.js
   }
+}
+
+export const getUserListings = async (req, res,next) => {
+
+  if(req.user.id === req.params.id){
+    try {
+    const listing = await Listing.findById({userRef: req.params.id});
+    res.status(200).json(listing); //send the user object to the client side (frontend) without the password
+  }catch (error) {
+    next(error); //this will go to the error handling middleware in index.js
+  }
+  }else{
+    return next(errorHandler(403,"You can only get your own listings!"));
+  }
+
+  
 }
