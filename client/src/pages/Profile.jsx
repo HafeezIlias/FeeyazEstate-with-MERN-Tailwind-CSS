@@ -29,6 +29,8 @@ export default function Profile() {
   const [fileUploadError, setFileUploadError] = useState(false);
   const [formData, setFormData] = useState({}); // to hold the form data
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [showListingsError, setShowListingsError] = useState(false);
+  const [userListings, setUserListings] = useState([]);
   //firebase storage
   //allow read
   //allow write: if request.resource.data.size < 2*1024*1024 && request.resource.data.contentType.matches('image/.*');
@@ -133,6 +135,21 @@ export default function Profile() {
       dispatch(deleteUserFailure(error.message));
     }
   };
+
+  const handleShowListing = async () => {
+    try {
+      setShowListingsError(false);
+      const res = await fetch(`backend/user/listings/${currentUser._id}`);
+      const data = await res.json();
+      if (data.success === false) {
+        setShowListingsError(true);
+        return;
+      }
+      setUserListings(data);
+    } catch (error) {
+      setShowListingsError(true);
+    }
+  };
   return (
     <div className=" bg-white p-3 max-w-lg mx-auto mt-5 rounded-xl shadow-lg">
       <h1 className="text-3xl font-semibold text-center my-2">Profile</h1>
@@ -193,7 +210,12 @@ export default function Profile() {
         >
           {loading ? "Loading ..." : "Update"}
         </button>
-        <Link className="bg-green-600 text-white p-3 rounded-xl uppercase hover:opacity-95 disabled:opacity-80 text-center" to="/create-listing">Create Listing</Link>
+        <Link
+          className="bg-green-600 text-white p-3 rounded-xl uppercase hover:opacity-95 disabled:opacity-80 text-center"
+          to="/create-listing"
+        >
+          Create Listing
+        </Link>
       </form>
       <div className="flex justify-between mt-5">
         <span
@@ -212,6 +234,42 @@ export default function Profile() {
       <p className="text-green-600 mt-5">
         {updateSuccess ? "Updated Successfully" : ""}
       </p>
+      <button onClick={handleShowListing} className="text-green-500 w-full">
+        Show Listing
+      </button>
+      <p className="text-red-600 mt-5">
+        {showListingsError ? "Error Fetching Listings" : ""}
+      </p>
+      {userListings && userListings.length > 0 && (
+        <div>
+          <h1 className="text-center mt-7 text-3xl font-semibold flex-col gap-4">Your Listings</h1>
+          userListings.map
+          {(listing) => (
+            <div
+              key={listing._id}
+              className="border rounded-lg p-3 flex justify-between items-center gap-4"
+            >
+              <Link to={`/listing/${listing._id}`}>
+                <img
+                  className="h-16 w-16 object-contain "
+                  src={listing.imageUrls[0]}
+                  alt="listing cover"
+                />
+              </Link>
+              <Link
+                className="flex-1 text-slate-600 font-semibold hover:underline truncate"
+                to={`/listing/${listing._id}`}
+              >
+                <p>{listing.name}</p>
+              </Link>
+              <div className="flex flex-col items-center">
+                <button className="text-red-600 uppercase">Delete</button>
+                <button className="text-green-600 uppercase">Edit</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
