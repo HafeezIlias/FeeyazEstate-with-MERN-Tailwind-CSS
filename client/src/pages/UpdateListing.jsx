@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   getStorage,
   ref,
@@ -7,11 +7,11 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { app } from "../firebase";
-import {useSelector} from 'react-redux';
+import { useSelector } from "react-redux";
 // Main component for creating real estate listings
 export default function UpdateListing() {
-    const params = useParams();
-  const {currentUser} = useSelector((state) => state.user);
+  const params = useParams();
+  const { currentUser } = useSelector((state) => state.user);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,6 +21,8 @@ export default function UpdateListing() {
   const [files, setFile] = useState([]);
   // State for storing preview URLs of selected files (before Firebase upload)
   const [previewUrls, setPreviewUrls] = useState([]);
+    // Track image upload errors
+  const [imageUploadError, setImageUploadError] = useState(false);
   // State for form data including uploaded image URLs from Firebase
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -38,23 +40,20 @@ export default function UpdateListing() {
   }); //set the initial state of the form data
 
   useEffect(() => {
-    
     const fetchListing = async () => {
-        const listingId = params.listingId;
-        const res = await fetch(`backend/listing/getListing/${listingId}`);
-        const data = await res.json();
-        if(data.success === false) {
-            console.log(data.message);
-            return;
-        }
-        setFormData(data);
-    }
-    
-    fetchListing();
+      const listingId = params.listingId;
+      const res = await fetch(`/backend/listing/getListing/${listingId}`);
+      const data = await res.json();
+      if (data.success === false) {
+        console.log(data.message);
+        return;
+      }
+      setFormData(data);
+    };
 
-  },[])
-  // Track image upload errors
-  const [imageUploadError, setImageUploadError] = useState(false);
+    fetchListing();
+  }, []);
+
 
   // Function to generate preview URLs from selected files
   // This creates temporary blob URLs that can be displayed immediately
@@ -234,186 +233,188 @@ export default function UpdateListing() {
   // Handle form submission to create a new listing
   // Sends listing data to backend API and handles response
   const handleSubmit = async (e) => {
-      e.preventDefault(); // prevent the form from submitting and refreshing the page
-      try {
-        if(formData.imageUrls.length < 1) return setError("Please upload at least one image");
-        if(+formData.reqularPrice < +formData.discountedPrice) return setError("Discounted price should be less than regular price");
-        setLoading(true);
-        setError(false);
+    e.preventDefault(); // prevent the form from submitting and refreshing the page
+    try {
+      if (formData.imageUrls.length < 1)
+        return setError("Please upload at least one image");
+      if (+formData.regularPrice < +formData.discountedPrice)
+        return setError("Discounted price should be less than regular price");
+      setLoading(true);
+      setError(false);
 
-        // Send POST request to backend with listing data
-        const res = await fetch(`backend/listing/update/${params.listingId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            userRef: currentUser._id, // Add current user ID to the listing
-          }),
-        });
+      // Send POST request to backend with listing data
+      const res = await fetch(`/backend/listing/update/${params.listingId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          userRef: currentUser._id, // Add current user ID to the listing
+        }),
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        // Check if API returned an error
-        if (data.success === false) {
-          setError(data.message);
-          setLoading(false);
-          return;
-        }
-
-        // If listing creation is successful, navigate to home page
+      // Check if API returned an error
+      if (data.success === false) {
+        setError(data.message);
         setLoading(false);
-        setError(null);
-        navigate(`/listing/${data._id}`);
-      } catch (error) {
-        // Handle any network or other errors
-        setError(error.message);
-        setLoading(false);
+        return;
       }
-    };
 
-    // Render the create listing form
-    return (
-      <main className="p-3 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold text-center my-7">
-          Update an estate
-        </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col gap-4 flex-1">
-            <input
-              className=" bg-white p-3 rounded-lg"
-              id="name"
-              maxLength={62}
-              minLength={10}
-              type="text"
-              placeholder="Name"
-              required
-              onChange={handleChange}
-              value={formData.name}
-            />
-            <textarea
-              className=" bg-white p-3 rounded-lg"
-              id="description"
-              maxLength={62}
-              minLength={10}
-              type="text"
-              placeholder="Description"
-              required
-              onChange={handleChange}
-              value={formData.description}
-            />
-            <input
-              className=" bg-white p-3 rounded-lg"
-              id="address"
-              maxLength={62}
-              minLength={10}
-              type="text"
-              placeholder="Address"
-              required
-              onChange={handleChange}
-              value={formData.address}
-            />
-            <div className="flex gap-6 flex-wrap">
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="sale"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={formData.type === "sale"}
-                />
-                <span>Sale</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="rent"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={formData.type === "rent"}
-                />
-                <span>Rent</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="parking"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={formData.parking}
-                />
-                <span> Parking Spot</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="furnished"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={formData.furnished}
-                />
-                <span>Furnished</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="offer"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={formData.offer}
-                />
-                <span>Offer</span>
-              </div>
+      // If listing creation is successful, navigate to home page
+      setLoading(false);
+      setError(null);
+      navigate(`/listing/${data._id}`);
+    } catch (error) {
+      // Handle any network or other errors
+      setError(error.message);
+      setLoading(false);
+    }
+  };
+
+  // Render the create listing form
+  return (
+    <main className="p-3 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-semibold text-center my-7">
+        Update an estate
+      </h1>
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-4 flex-1">
+          <input
+            className=" bg-white p-3 rounded-lg"
+            id="name"
+            maxLength={62}
+            minLength={10}
+            type="text"
+            placeholder="Name"
+            required
+            onChange={handleChange}
+            value={formData.name}
+          />
+          <textarea
+            className=" bg-white p-3 rounded-lg"
+            id="description"
+            maxLength={62}
+            minLength={10}
+            type="text"
+            placeholder="Description"
+            required
+            onChange={handleChange}
+            value={formData.description}
+          />
+          <input
+            className=" bg-white p-3 rounded-lg"
+            id="address"
+            maxLength={62}
+            minLength={10}
+            type="text"
+            placeholder="Address"
+            required
+            onChange={handleChange}
+            value={formData.address}
+          />
+          <div className="flex gap-6 flex-wrap">
+            <div className="flex gap-2">
+              <input
+                type="checkbox"
+                id="sale"
+                className="w-5"
+                onChange={handleChange}
+                checked={formData.type === "sale"}
+              />
+              <span>Sale</span>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex gap-2">
+              <input
+                type="checkbox"
+                id="rent"
+                className="w-5"
+                onChange={handleChange}
+                checked={formData.type === "rent"}
+              />
+              <span>Rent</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="checkbox"
+                id="parking"
+                className="w-5"
+                onChange={handleChange}
+                checked={formData.parking}
+              />
+              <span> Parking Spot</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="checkbox"
+                id="furnished"
+                className="w-5"
+                onChange={handleChange}
+                checked={formData.furnished}
+              />
+              <span>Furnished</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="checkbox"
+                id="offer"
+                className="w-5"
+                onChange={handleChange}
+                checked={formData.offer}
+              />
+              <span>Offer</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                className="bg-white p-3 rounded-lg"
+                type="number"
+                id="bedrooms"
+                min="1"
+                max={10}
+                required
+                onChange={handleChange}
+                value={formData.bedrooms}
+              />
+              <p>Bedroom</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                className="bg-white p-3 rounded-lg"
+                type="number"
+                id="bathrooms"
+                min="1"
+                max={10}
+                required
+                onChange={handleChange}
+                value={formData.bathrooms}
+              />
+              <p>Bathroom</p>
+            </div>
+            <div className="flex flex-wrap gap-6">
               <div className="flex items-center gap-2">
                 <input
                   className="bg-white p-3 rounded-lg"
                   type="number"
-                  id="bedrooms"
-                  min="1"
-                  max={10}
+                  id="regularPrice"
+                  min="50"
+                  max={10000}
                   required
                   onChange={handleChange}
-                  value={formData.bedrooms}
+                  value={formData.regularPrice}
                 />
-                <p>Bedroom</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  className="bg-white p-3 rounded-lg"
-                  type="number"
-                  id="bathrooms"
-                  min="1"
-                  max={10}
-                  required
-                  onChange={handleChange}
-                  value={formData.bathrooms}
-                />
-                <p>Bathroom</p>
-              </div>
-              <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <input
-                    className="bg-white p-3 rounded-lg"
-                    type="number"
-                    id="regularPrice"
-                    min="50"
-                    max={10000}
-                    required
-                    onChange={handleChange}
-                    value={formData.regularPrice}
-                  />
-                  <div className="flex flex-col items-center">
-                    <p>Regular Price</p>
-                    <span className="text-xs">RM/Months</span>
-                  </div>
+                <div className="flex flex-col items-center">
+                  <p>Regular Price</p>
+                  <span className="text-xs">RM/Months</span>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-6">
-                {formData.offer && ( //if offer is true
-                  <div className="flex items-center gap-2">
+            </div>
+            <div className="flex flex-wrap gap-6">
+              {formData.offer && ( //if offer is true
+                <div className="flex items-center gap-2">
                   <input
                     className="bg-white p-3 rounded-lg"
                     type="number"
@@ -429,112 +430,114 @@ export default function UpdateListing() {
                     <span className="text-xs">RM/Months</span>
                   </div>
                 </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
-          <div className="flex flex-col flex-1 gap-4">
-            <p className=" font-semibold">Images:</p>
-            <span className="font-normal text-gray-500 ml-2">
-              The first image will be the cover (max 6)
-            </span>
-            <div className="flex gap-4 ">
-              <input
-                onChange={(e) => {
-                  // Store the selected files
-                  setFile(e.target.files);
-                  // Generate preview URLs for immediate display
-                  if (e.target.files && e.target.files.length > 0) {
-                    // Clean up any existing previews first
-                    cleanupPreviews();
-                    // Generate new previews
-                    generatePreviews(e.target.files);
-                  } else {
-                    // If no files selected, clean up previews
-                    cleanupPreviews();
-                  }
-                }}
-                className="p-3 border border-gray-300 rounded-lg w-full "
-                type="file"
-                id="images"
-                accept="image/*"
-                multiple
-              />
-              <button
-                type="button"
-                onClick={handleImageSubmit}
-                disabled={uploading}
-                className=" p-3 text-green-600 border border-green-600 rounded-lg uppercase hover:shadow-lg disabled:opacity-80"
-              >
-                {uploading ? "Uploading..." : "Upload"}
-              </button>{" "}
-              {/* we change to type button because we want it to button for the image uploadd not to submit the form as it inside the form */}
-            </div>
+        </div>
+        <div className="flex flex-col flex-1 gap-4">
+          <p className=" font-semibold">Images:</p>
+          <span className="font-normal text-gray-500 ml-2">
+            The first image will be the cover (max 6)
+          </span>
+          <div className="flex gap-4 ">
+            <input
+              onChange={(e) => {
+                // Store the selected files
+                setFile(e.target.files);
+                // Generate preview URLs for immediate display
+                if (e.target.files && e.target.files.length > 0) {
+                  // Clean up any existing previews first
+                  cleanupPreviews();
+                  // Generate new previews
+                  generatePreviews(e.target.files);
+                } else {
+                  // If no files selected, clean up previews
+                  cleanupPreviews();
+                }
+              }}
+              className="p-3 border border-gray-300 rounded-lg w-full "
+              type="file"
+              id="images"
+              accept="image/*"
+              multiple
+            />
+            <button
+              type="button"
+              onClick={handleImageSubmit}
+              disabled={uploading}
+              className=" p-3 text-green-600 border border-green-600 rounded-lg uppercase hover:shadow-lg disabled:opacity-80"
+            >
+              {uploading ? "Uploading..." : "Upload"}
+            </button>{" "}
+            {/* we change to type button because we want it to button for the image uploadd not to submit the form as it inside the form */}
+          </div>
 
-            {/* Error message display */}
-            <p className="text-red-600 text-sm">
-              {imageUploadError && imageUploadError}
-            </p>
+          {/* Error message display */}
+          <p className="text-red-600 text-sm">
+            {imageUploadError && imageUploadError}
+          </p>
 
-            {/* Preview Section - Shows selected files before upload */}
-            {previewUrls.length > 0 && (
-              <div className="mt-4">
-                <p className="font-semibold mb-2">Selected Images (Preview):</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative">
-                      {/* Preview image */}
-                      <img
-                        className="w-full h-24 object-cover rounded-lg border"
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                      />
-                      {/* Remove button for individual preview */}
-                      <button
-                        type="button"
-                        onClick={() => removePreview(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Uploaded Images Section - Shows images that have been uploaded to Firebase */}
-            {formData.imageUrls.length > 0 && (
-              <div className="mt-4">
-                <p className="font-semibold mb-2">Uploaded Images:</p>
-                {formData.imageUrls.map((url, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between p-3 border items-center mb-2 rounded-lg"
-                  >
+          {/* Preview Section - Shows selected files before upload */}
+          {previewUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="font-semibold mb-2">Selected Images (Preview):</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {previewUrls.map((url, index) => (
+                  <div key={index} className="relative">
+                    {/* Preview image */}
                     <img
-                      className="w-20 h-20 object-contain rounded-lg"
+                      className="w-full h-24 object-cover rounded-lg border"
                       src={url}
-                      alt="listing image"
+                      alt={`Preview ${index + 1}`}
                     />
+                    {/* Remove button for individual preview */}
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className="p-3 text-red-600 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+                      onClick={() => removePreview(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
                     >
-                      Delete
+                      ×
                     </button>
                   </div>
                 ))}
               </div>
-            )}
-            <button disabled={loading || uploading} className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80">
-              {loading ? "Updating..." : "Update Listing"}
-            </button>
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-          </div>
-        </form>
-      </main>
-    );
-  };
+            </div>
+          )}
 
+          {/* Uploaded Images Section - Shows images that have been uploaded to Firebase */}
+          {formData.imageUrls.length > 0 && (
+            <div className="mt-4">
+              <p className="font-semibold mb-2">Uploaded Images:</p>
+              {formData.imageUrls.map((url, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between p-3 border items-center mb-2 rounded-lg"
+                >
+                  <img
+                    className="w-20 h-20 object-contain rounded-lg"
+                    src={url}
+                    alt="listing image"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="p-3 text-red-600 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            disabled={loading || uploading}
+            className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+          >
+            {loading ? "Updating..." : "Update Listing"}
+          </button>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+        </div>
+      </form>
+    </main>
+  );
+}
