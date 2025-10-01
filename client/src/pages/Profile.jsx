@@ -139,7 +139,7 @@ export default function Profile() {
   const handleShowListing = async () => {
     try {
       setShowListingsError(false);
-      const res = await fetch(`backend/user/listings/${currentUser._id}`);
+      const res = await fetch(`backend/user/listing/${currentUser._id}`);
       const data = await res.json();
       if (data.success === false) {
         setShowListingsError(true);
@@ -155,18 +155,19 @@ export default function Profile() {
     try {
       const res = await fetch(`backend/listing/delete/${listingId}`, {
         method: "DELETE",
-      });;
+      });
       const data = await res.json();
       if (data.success === false) {
         console.log(data.message);
         return;
       }
-      setUserListings((prev)=>prev.filter((listing) => listing._id !== listingId));
+      setUserListings((prev) =>
+        prev.filter((listing) => listing._id !== listingId)
+      );
     } catch (error) {
       console.log(error);
-      
     }
-  }
+  };
   return (
     <div className=" bg-white p-3 max-w-lg mx-auto mt-5 rounded-xl shadow-lg">
       <h1 className="text-3xl font-semibold text-center my-2">Profile</h1>
@@ -259,12 +260,13 @@ export default function Profile() {
       </p>
       {userListings && userListings.length > 0 && (
         <div>
-          <h1 className="text-center mt-7 text-3xl font-semibold flex-col gap-4">Your Listings</h1>
-          userListings.map
-          {(listing) => (
+          <h1 className="text-center mt-7 text-3xl font-semibold flex-col gap-4">
+            Your Listings
+          </h1>
+          {userListings.map((listing) => (
             <div
               key={listing._id}
-              className="border rounded-lg p-3 flex justify-between items-center gap-4"
+              className="border rounded-lg p-3 flex justify-between items-center gap-4 mt-2"
             >
               <Link to={`/listing/${listing._id}`}>
                 <img
@@ -280,11 +282,18 @@ export default function Profile() {
                 <p>{listing.name}</p>
               </Link>
               <div className="flex flex-col items-center">
-                <button onClick={()=> handleListingDelete(listing._id)} className="text-red-600 uppercase">Delete</button>
-                <button className="text-green-600 uppercase">Edit</button>
+                <button
+                  onClick={() => handleListingDelete(listing._id)}
+                  className="text-red-600 uppercase"
+                >
+                  Delete
+                </button>
+                <Link to={`/update-listing/${listing._id}`}>
+                  <button className="text-green-600 uppercase">Edit</button>
+                </Link>
               </div>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

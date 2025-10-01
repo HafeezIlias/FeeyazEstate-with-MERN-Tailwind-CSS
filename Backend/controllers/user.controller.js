@@ -51,7 +51,7 @@ export const getUserListings = async (req, res,next) => {
 
   if(req.user.id === req.params.id){
     try {
-    const listing = await Listing.findById({userRef: req.params.id});
+    const listing = await Listing.find({userRef: req.params.id});
     res.status(200).json(listing); //send the user object to the client side (frontend) without the password
   }catch (error) {
     next(error); //this will go to the error handling middleware in index.js
