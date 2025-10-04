@@ -296,8 +296,6 @@ export default function UpdateListing() {
           <textarea
             className=" bg-white p-3 rounded-lg"
             id="description"
-            maxLength={62}
-            minLength={10}
             type="text"
             placeholder="Description"
             required
@@ -307,8 +305,6 @@ export default function UpdateListing() {
           <input
             className=" bg-white p-3 rounded-lg"
             id="address"
-            maxLength={62}
-            minLength={10}
             type="text"
             placeholder="Address"
             required
